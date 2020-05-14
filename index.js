@@ -8,7 +8,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const { Pool } = require("pg");
-console.log(process.env.DATABASE_URL, "proc");
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -19,7 +19,6 @@ const pool = new Pool({
 app.get("/articles/:topic", async (req, res) => {
   try {
     const client = await pool.connect();
-    console.log(req.params.topic, "tah a");
     const result = await client.query(
       `SELECT * FROM articles WHERE topic = '${req.params.topic}'`
     );
