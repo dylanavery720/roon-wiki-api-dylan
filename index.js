@@ -1,7 +1,9 @@
 const express = require("express");
 const cors = require("cors");
+const bodyParser = require("body-parser");
 
 const app = express();
+app.use(bodyParser());
 app.use(cors());
 
 const dotenv = require("dotenv");
@@ -31,10 +33,49 @@ app.get("/articles/:topic", async (req, res) => {
   }
 });
 
+app.put("/articles/:topic", async (req, res) => {
+  const { topic, key, newcontent, oldcontent } = req.body;
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      `UPDATE articles SET ${key} = '${newcontent}' WHERE topic = '${topic}'`
+    );
+    await client.query(
+      "INSERT INTO edits (article, oldcontent, newcontent) VALUES ($1, $2, $3)",
+      [topic, oldcontent, newcontent],
+      (error, results) => {
+        if (error) {
+          throw error;
+        }
+        res.status(201).send(`Success`);
+      }
+    );
+    // const results = { results: result ? result.rows : null };
+    // res.send(results);
+    client.release();
+  } catch (err) {
+    console.error(err);
+    res.send("Error " + err);
+  }
+});
+
+app.get("/articles", async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(`SELECT * FROM articles`);
+    const results = { results: result ? result.rows : null };
+    res.send(results);
+    client.release();
+  } catch (err) {
+    console.error(err);
+    res.send("Error " + err);
+  }
+});
+
 app.post("/articles", async (req, res) => {
   try {
     const client = await pool.connect();
-    const { topic, content, introduction, infobox } = req.query;
+    const { topic, content, introduction, infobox } = req.body;
 
     pool.query(
       "INSERT INTO articles (topic, content, introduction, infobox) VALUES ($1, $2, $3, $4)",
@@ -43,7 +84,7 @@ app.post("/articles", async (req, res) => {
         if (error) {
           throw error;
         }
-        res.status(201).send(`User added with ID: ${results.insertId}`);
+        res.status(201).send(`Success`);
       }
     );
     client.release();
