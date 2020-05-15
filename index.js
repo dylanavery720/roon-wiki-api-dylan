@@ -19,10 +19,11 @@ const pool = new Pool({
 });
 
 app.get("/articles/:topic", async (req, res) => {
+  const { topic } = req.params;
   try {
     const client = await pool.connect();
     const result = await client.query(
-      `SELECT * FROM articles WHERE topic = '${req.params.topic}'`
+      `SELECT * FROM articles WHERE topic = '${topic}'`
     );
     const results = { results: result ? result.rows : null };
     res.send(results);
@@ -63,6 +64,22 @@ app.get("/articles", async (req, res) => {
   try {
     const client = await pool.connect();
     const result = await client.query(`SELECT * FROM articles`);
+    const results = { results: result ? result.rows : null };
+    res.send(results);
+    client.release();
+  } catch (err) {
+    console.error(err);
+    res.send("Error " + err);
+  }
+});
+
+app.get("/edits/:topic", async (req, res) => {
+  const { topic } = req.params;
+  try {
+    const client = await pool.connect();
+    const result = await client.query(
+      `SELECT * FROM edits WHERE article = '${topic}'`
+    );
     const results = { results: result ? result.rows : null };
     res.send(results);
     client.release();
