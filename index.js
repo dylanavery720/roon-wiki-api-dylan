@@ -43,7 +43,7 @@ app.put("/articles/:topic", async (req, res) => {
     );
     await client.query(
       "INSERT INTO edits (article, oldcontent, newcontent) VALUES ($1, $2, $3)",
-      [topic, oldcontent, newcontent],
+      [topic, JSON.stringify(oldcontent), JSON.stringify(newcontent)],
       (error, results) => {
         if (error) {
           throw error;
@@ -92,11 +92,11 @@ app.get("/edits/:topic", async (req, res) => {
 app.post("/articles", async (req, res) => {
   try {
     const client = await pool.connect();
-    const { topic, content, introduction, infobox } = req.body;
+    const { topic, content, introduction, infobox, category } = req.body;
 
     pool.query(
-      "INSERT INTO articles (topic, content, introduction, infobox) VALUES ($1, $2, $3, $4)",
-      [topic, content, introduction, infobox],
+      "INSERT INTO articles (topic, content, introduction, infobox, category) VALUES ($1, $2, $3, $4, $5)",
+      [topic, content, introduction, infobox, category],
       (error, results) => {
         if (error) {
           throw error;
