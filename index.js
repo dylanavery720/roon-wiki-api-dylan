@@ -18,6 +18,19 @@ const pool = new Pool({
   },
 });
 
+app.get("/articles", async (req, res) => {
+  try {
+    const client = await pool.connect();
+    const result = await client.query(`SELECT * FROM articles`);
+    const results = { results: result ? result.rows : null };
+    res.send(results);
+    client.release();
+  } catch (err) {
+    console.error(err);
+    res.send({ error: err });
+  }
+});
+
 app.get("/articles/:topic", async (req, res) => {
   const { topic } = req.params;
   try {
@@ -30,46 +43,7 @@ app.get("/articles/:topic", async (req, res) => {
     client.release();
   } catch (err) {
     console.error(err);
-    res.send("Error " + err);
-  }
-});
-
-app.put("/articles/:topic", async (req, res) => {
-  const { topic, key, newcontent, oldcontent } = req.body;
-  try {
-    const client = await pool.connect();
-    const result = await client.query(
-      `UPDATE articles SET ${key} = '${newcontent}' WHERE topic = '${topic}'`
-    );
-    await client.query(
-      "INSERT INTO edits (article, oldcontent, newcontent) VALUES ($1, $2, $3)",
-      [topic, JSON.stringify(oldcontent), JSON.stringify(newcontent)],
-      (error, results) => {
-        if (error) {
-          throw error;
-        }
-        res.status(201).send(`Success`);
-      }
-    );
-    // const results = { results: result ? result.rows : null };
-    // res.send(results);
-    client.release();
-  } catch (err) {
-    console.error(err);
-    res.send("Error " + err);
-  }
-});
-
-app.get("/articles", async (req, res) => {
-  try {
-    const client = await pool.connect();
-    const result = await client.query(`SELECT * FROM articles`);
-    const results = { results: result ? result.rows : null };
-    res.send(results);
-    client.release();
-  } catch (err) {
-    console.error(err);
-    res.send("Error " + err);
+    res.send({ error: err });
   }
 });
 
@@ -85,7 +59,26 @@ app.get("/edits/:topic", async (req, res) => {
     client.release();
   } catch (err) {
     console.error(err);
-    res.send("Error " + err);
+    res.send({ error: err });
+  }
+});
+
+app.put("/articles/:topic", async (req, res) => {
+  const { topic, key, newcontent, oldcontent } = req.body;
+  try {
+    const client = await pool.connect();
+    await client.query(
+      `UPDATE articles SET ${key} = '${newcontent}' WHERE topic = '${topic}'`
+    );
+    await client.query(
+      "INSERT INTO edits (article, oldcontent, newcontent) VALUES ($1, $2, $3)",
+      [topic, JSON.stringify(oldcontent), JSON.stringify(newcontent)]
+    );
+    res.status(201).send({ results: "Success" });
+    client.release();
+  } catch (err) {
+    console.error(err);
+    res.send({ error: err });
   }
 });
 
@@ -101,13 +94,13 @@ app.post("/articles", async (req, res) => {
         if (error) {
           throw error;
         }
-        res.status(201).send(`Success`);
+        res.status(201).send({ results: "Success" });
       }
     );
     client.release();
   } catch (err) {
     console.error(err);
-    res.send("Error " + err);
+    res.send({ error: err });
   }
 });
 
