@@ -36,7 +36,8 @@ app.get("/articles/:topic", async (req, res) => {
   try {
     const client = await pool.connect();
     const result = await client.query(
-      `SELECT * FROM articles WHERE topic = '${topic}'`
+      "SELECT * FROM articles WHERE topic = $1",
+      [topic.toLowerCase()]
     );
     const results = { results: result ? result.rows : null };
     res.send(results);
@@ -52,7 +53,8 @@ app.get("/edits/:topic", async (req, res) => {
   try {
     const client = await pool.connect();
     const result = await client.query(
-      `SELECT * FROM edits WHERE article = '${topic}'`
+      `SELECT * FROM edits WHERE article = $1`,
+      [topic.toLowerCase()]
     );
     const results = { results: result ? result.rows : null };
     res.send(results);
@@ -68,17 +70,24 @@ app.put("/articles/:topic", async (req, res) => {
   try {
     const client = await pool.connect();
     await client.query(
-      `UPDATE articles SET ${key} = '${newcontent}' WHERE topic = '${topic}'`
+      `UPDATE articles SET ${key} = '${newcontent}' WHERE topic = '${topic.toLowerCase()}'`
     );
     await client.query(
       "INSERT INTO edits (article, oldcontent, newcontent) VALUES ($1, $2, $3)",
-      [topic, JSON.stringify(oldcontent), JSON.stringify(newcontent)]
+      [topic, JSON.stringify(oldcontent), JSON.stringify(newcontent)],
+      (error, results) => {
+        if (!error) {
+          res.status(200).send({ results: "Success" });
+        } else {
+          console.error(error);
+          res.status(401).send({ error: error });
+        }
+      }
     );
-    res.status(201).send({ results: "Success" });
     client.release();
   } catch (err) {
     console.error(err);
-    res.send({ error: err });
+    res.status(401).send({ error: error });
   }
 });
 
@@ -89,18 +98,19 @@ app.post("/articles", async (req, res) => {
 
     pool.query(
       "INSERT INTO articles (topic, content, introduction, infobox, category) VALUES ($1, $2, $3, $4, $5)",
-      [topic, content, introduction, infobox, category],
+      [topic.toLowerCase(), content, introduction, infobox, category],
       (error, results) => {
-        if (error) {
-          throw error;
+        if (!error) {
+          res.status(200).send({ results: "Success" });
+        } else {
+          console.error(error);
+          res.status(401).send({ error: error });
         }
-        res.status(201).send({ results: "Success" });
       }
     );
     client.release();
   } catch (err) {
     console.error(err);
-    res.send({ error: err });
   }
 });
 
