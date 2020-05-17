@@ -87,7 +87,7 @@ app.put("/articles/:topic", async (req, res) => {
     client.release();
   } catch (err) {
     console.error(err);
-    res.status(401).send({ error: error });
+    res.status(401).send({ error: err });
   }
 });
 
