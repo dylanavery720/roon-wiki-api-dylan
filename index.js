@@ -114,7 +114,7 @@ app.post("/articles", async (req, res) => {
   }
 });
 
-const server = app.listen(8080, () => {
+const server = app.listen(process.env.PORT || 8080, () => {
   const host = server.address().address;
   const port = server.address().port;
 
